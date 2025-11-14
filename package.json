@@ -1,0 +1,21 @@
+{
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "set GLOBAL_AGENT_HTTP_PROXY=http://127.0.0.1:10808&& set HTTP_PORT=7778&set API_URL=http://127.0.0.1:8081&& tsx ./index.ts",
+		"start": "tsx ./index.ts"
+	},
+	"dependencies": {
+		"@fastify/multipart": "^9.2.1",
+		"@sinclair/typebox": "^0.34.41",
+		"@types/jsdom": "^27.0.0",
+		"@types/node": "^24.8.1",
+		"axios": "^1.12.2",
+		"fastify": "^5.6.1",
+		"form-data": "^4.0.4",
+		"jsdom": "^27.0.1",
+		"puppeteer-extra": "^3.3.6",
+		"puppeteer-extra-plugin-stealth": "^2.11.2",
+		"socks-proxy-agent": "^8.0.5",
+		"typescript": "^5.9.3"
+	}
+}
