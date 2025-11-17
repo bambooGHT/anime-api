@@ -5,6 +5,7 @@ import { PassThrough } from "stream";
 import { ImgProxy, SearchValue, type ImgProxyType, type RouteType, type SearchValueType } from "types";
 import { AnimeCrawler } from "crawler";
 import { proxyAgent } from "proxyAgent";
+import { noodlemagazineCrawler } from "crawler_noodlemagazine";
 
 type MessageParams = {
   title: string;
@@ -21,13 +22,14 @@ export const routes: RouteType[] = [
     url: "/searchAnime",
     schema: SearchValue,
     handler: async (req: FastifyRequest<{ Querystring: SearchValueType; }>, res) => {
-      let { value } = req.query;
-      if (!Number.isNaN(+value)) value = +value;
-
       try {
+        let { value, site } = req.query;
+        if (typeof value === "string" && !value.trim()) return;
+        if (site === "noodlemagazine") return { data: await noodlemagazineCrawler(value as string) };
+        if (!Number.isNaN(+value)) value = +value;
         return { data: await AnimeCrawler(value) };
       } catch (error: any) {
-        console.log(error);
+        console.log("error searchAnime", error);
       }
     }
   },
@@ -73,7 +75,7 @@ export const routes: RouteType[] = [
         return res1.data;
 
       } catch (error: any) {
-        console.log("error", error.response);
+        console.log("error sendMessage", error);
         res.status(502);
         throw new Error("Message sending failed.");
       }
@@ -86,12 +88,12 @@ export const routes: RouteType[] = [
       querystring: ImgProxy
     },
     handler: async (req: FastifyRequest<{ Querystring: ImgProxyType; }>, res) => {
-      const { url } = req.query;
+      const url = req.url.split("?url=")[1];
       const response = await axios.get(url, {
         httpsAgent: proxyAgent,
         responseType: 'stream',
       });
-      res.header('Content-Type', response.headers['content-type'] || 'image/*');
+      res.header('Content-Type', response.headers['content-type'] || 'image/jpeg');
 
       return response.data;
     }
@@ -104,9 +106,9 @@ export const routes: RouteType[] = [
     },
     handler: async (req: FastifyRequest<{ Querystring: ImgProxyType; }>, res) => {
       try {
-        const { url } = req.query;
+        const url = req.url.split("?url=")[1];
         const range = req.headers.range || 'bytes=0-';
-        const headers: any = { Range: range };
+        const headers: any = { Range: range, "referer": url };
         const response = await axios.get(url, {
           httpsAgent: proxyAgent,
           responseType: 'stream',
@@ -122,7 +124,8 @@ export const routes: RouteType[] = [
 
         return response.data;
       } catch (error: any) {
-        console.log("error", error);
+        console.log("error videoProxy", error.response?.data);
+        throw new Error("load error");
       }
     }
   }

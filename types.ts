@@ -12,12 +12,12 @@ export interface AnimeInfoBase {
   name: string,
   CN_name: string;
   description: string;
-  images: { type: string, url: string, imgShowUrl: string; }[];
+  images: { type: string, url: string, imgShowUrl?: string; }[];
   videos: {
     type: string,
     size: string,
     url: string;
-    imgShowUrl: string;
+    imgShowUrl?: string;
     cover: string;
   }[];
   tags: string[];
@@ -28,7 +28,11 @@ export const ImgProxy = Type.Object({
 });
 
 export const SearchValue = Type.Object({
-  value: Type.Union([Type.String(), Type.Number()])
+  value: Type.Union([Type.String(), Type.Number()]),
+  site: Type.Union([
+    Type.Literal("hanime"),
+    Type.Literal("noodlemagazine"),
+  ])
 });
 
 export type ImgProxyType = Static<typeof ImgProxy>;

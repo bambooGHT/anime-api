@@ -1,18 +1,7 @@
-import { JSDOM } from 'jsdom';
+import { getDocument } from 'getDocument';
 import type { AnimeInfoBase } from "types";
-import puppeteer, { type VanillaPuppeteer } from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
 const baseURL = "https://hanime1.com";
-
-let browser: Awaited<ReturnType<VanillaPuppeteer["launch"]>>;
-
-(async () => {
-  puppeteer.use(StealthPlugin());
-  browser = await puppeteer.launch({
-    args: [`--proxy-server=${process.env.GLOBAL_AGENT_HTTP_PROXY}`],
-  });
-})();
 
 export const AnimeCrawler = async (param: string | number): Promise<AnimeInfoBase[]> => {
   if (typeof param === 'string') return searchAnime(param);
@@ -25,7 +14,7 @@ const searchAnime = async (text: string): Promise<AnimeInfoBase[]> => {
   const animeIdList = await reqAnimeSearchResult(text);
   if (!animeIdList.length) return [];
 
-  return Promise.all(animeIdList.map(getAnimeInfo)) as Promise<AnimeInfoBase[]>;
+  return (await Promise.all(animeIdList.map(getAnimeInfo))).filter(Boolean) as AnimeInfoBase[];
 };
 
 const reqAnimeSearchResult = async (text: string) => {
@@ -90,31 +79,10 @@ const getAnimeCover = async (url: string, title: string) => {
   const item = [...document.querySelector("div.home-rows-videos-wrapper")!.children].find(p => {
     return p.textContent.includes(title);
   })!;
+
   return item.querySelector("img")!.src;
 };
 
-const onReq = (request: any) => {
-  const resourceType = request.resourceType();
-  if (resourceType === "document") {
-    request.continue();
-  } else {
-    request.abort();
-  }
-};
-
 const reqAnimeHTML = async (path: string) => {
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on('request', onReq);
-  
-  await page.goto(path.startsWith("https") ? path : baseURL + path, {
-    waitUntil: 'domcontentloaded'
-  });
-
-  const resultElement = (await page.content()).toString();
-  page.off("request", onReq);
-  page.close();
-
-  const result = new JSDOM(resultElement).window.document;
-  return result;
+  return await getDocument(path.startsWith("https") ? path : baseURL + path);
 };
