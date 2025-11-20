@@ -69,9 +69,7 @@ export const routes: RouteType[] = [
         form.append("chat_id", info.chatId);
         form.append("media", JSON.stringify(info.media));
 
-        const res1 = await axios.post(`${process.env.API_URL}/bot${info.botToken}/sendMediaGroup`, form, {
-          httpsAgent: proxyAgent,
-        });
+        const res1 = await axios.post(`${process.env.API_URL}/bot${info.botToken}/sendMediaGroup`, form);
         return res1.data;
 
       } catch (error: any) {

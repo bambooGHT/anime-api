@@ -57,7 +57,7 @@ const getVideoInfo = async (path: string): Promise<AnimeInfoBase | undefined> =>
         size: p.label + "p",
         url: p.file,
         imgShowUrl: cover,
-        cover: cover,
+        cover: imgs[0],
       };
     }),
     tags: []
