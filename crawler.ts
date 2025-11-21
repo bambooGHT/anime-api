@@ -18,14 +18,28 @@ const searchAnime = async (text: string): Promise<AnimeInfoBase[]> => {
 };
 
 const reqAnimeSearchResult = async (text: string) => {
+  console.log(`/search?query=${text}`);
+
   const document = await reqAnimeHTML(`/search?query=${text}`);
-  const results = [...document.querySelector("div.row")?.querySelectorAll<HTMLAnchorElement>("div.hidden-xs a.overlay") || []].slice(1, 5);
-  const el = results.find(p => {
-    const title = p.parentElement?.title!;
-    return title.split("] ")[1] === text || title === text;
+  let results = [...document.querySelector("div.row")?.querySelectorAll<HTMLAnchorElement>("div.hidden-xs a.overlay") || []].slice(0, 6);
+  let el = results.find(p => {
+    const title = p.parentElement?.title;
+    return title!.split("] ")[1] === text || title === text;
   });
 
-  return (el ? [el] : results).map(p => +p.href.split("v=")[1]);
+  if (!results.length) {
+    results = [...document.querySelector(".home-rows-videos-wrapper")!.children] as HTMLAnchorElement[];
+    if (!results.length) return [];
+    el = results.find(p => {
+      const title = p.querySelector(".home-rows-videos-title")!.textContent;
+      return title === text;
+    });
+  }
+
+  return (el ? [el] : results).map(p => {
+    const v = p.href.split("v=")?.[1];
+    return v ? +v : undefined;
+  }).filter(Boolean) as number[];
 };
 
 const getAnimeInfo = async (id: number): Promise<AnimeInfoBase | undefined> => {

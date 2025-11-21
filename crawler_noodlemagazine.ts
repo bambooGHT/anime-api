@@ -34,9 +34,9 @@ const getVideoInfo = async (path: string): Promise<AnimeInfoBase | undefined> =>
     ${playListStr.textContent.replaceAll("window.", "const ")}
     return playlist;
   `)();
-
+  
   const imgs = [playList.image];
-  if (playList.tracks[0]) {
+  if (playList.tracks?.[0]) {
     const thumbnailsData = await getDocument(baseURL + playList.tracks[0].file);
     const thumbnails = thumbnailsData.querySelector("pre")!.textContent.split("\n").filter((p: string) => p.startsWith("https"));
     imgs.push(thumbnails[Math.floor(thumbnails.length / 2)]);
