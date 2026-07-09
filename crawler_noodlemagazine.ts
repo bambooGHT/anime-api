@@ -34,7 +34,7 @@ const getVideoInfo = async (path: string): Promise<AnimeInfoBase | undefined> =>
     ${playListStr.textContent.replaceAll("window.", "const ")}
     return playlist;
   `)();
-  
+
   const imgs = [playList.image];
   if (playList.tracks?.[0]) {
     const thumbnailsData = await getDocument(baseURL + playList.tracks[0].file);
@@ -50,7 +50,7 @@ const getVideoInfo = async (path: string): Promise<AnimeInfoBase | undefined> =>
       type: "image/jpeg",
       url: p
     })),
-
+    id: 0,
     videos: [playList.sources[0]].map(p => {
       return {
         type: "video/" + p.type,

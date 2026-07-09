@@ -28,10 +28,32 @@ const reqAnimeSearchResult = async (text: string) => {
   });
 
   if (!results.length) {
-    results = [...document.querySelector(".home-rows-videos-wrapper")!.children] as HTMLAnchorElement[];
+    const finds = [
+      () => {
+        const list = document.querySelector(".horizontal-row");
+
+        if (list?.children?.length) {
+          return [...list.querySelectorAll("a.video-link")] as HTMLAnchorElement[];
+        }
+      },
+      () => {
+        const list = document.querySelector(".home-rows-videos-wrapper")?.children;
+        if (list?.length) {
+          return [...list] as HTMLAnchorElement[];
+        }
+      }
+    ];
+    for (const find of finds) {
+      const res = find();
+      if (res) {
+        results = res;
+        break;
+      }
+    }
+
     if (!results.length) return [];
     el = results.find(p => {
-      const title = p.querySelector(".home-rows-videos-title")!.textContent;
+      const title = p.querySelector(".home-rows-videos-title")?.textContent;
       return title === text;
     });
   }
@@ -40,6 +62,16 @@ const reqAnimeSearchResult = async (text: string) => {
     const v = p.href.split("v=")?.[1];
     return v ? +v : undefined;
   }).filter(Boolean) as number[];
+};
+
+export const getAnimeVideoUrl = async (id: number) => {
+  const document = await reqAnimeHTML(`/watch?v=${id}`);
+  if (!document) return document;
+
+  const videoEl = document.querySelector("video")!;
+  const videoResList = [...videoEl.children] as HTMLSourceElement[];
+  const maxVideo = videoResList.length > 1 ? videoResList.reduce((max, item) => +item.getAttribute("size")! > +max.getAttribute("size")! ? item : max) : videoResList[0];
+  return maxVideo.src;
 };
 
 const getAnimeInfo = async (id: number): Promise<AnimeInfoBase | undefined> => {
@@ -76,6 +108,7 @@ const getAnimeInfo = async (id: number): Promise<AnimeInfoBase | undefined> => {
     name: title,
     CN_name: CN_title === title ? "" : CN_title,
     description: info,
+    id: id,
     images: [
       {
         type: "image/jpeg",
@@ -98,5 +131,9 @@ const getAnimeCover = async (url: string, title: string) => {
 };
 
 const reqAnimeHTML = async (path: string) => {
-  return await getDocument(path.startsWith("https") ? path : baseURL + path);
+  return getDocument(getUrl(path));
+};
+
+const getUrl = (path: string) => {
+  return path.startsWith("https") ? path : baseURL + path;
 };

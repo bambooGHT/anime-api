@@ -12,6 +12,7 @@
 		"axios": "^1.12.2",
 		"fastify": "^5.6.1",
 		"form-data": "^4.0.4",
+		"got": "^15.0.7",
 		"jsdom": "^27.0.1",
 		"puppeteer-extra": "^3.3.6",
 		"puppeteer-extra-plugin-stealth": "^2.11.2",

@@ -12,6 +12,7 @@ export interface AnimeInfoBase {
   name: string,
   CN_name: string;
   description: string;
+  id: number;
   images: { type: string, url: string, imgShowUrl?: string; }[];
   videos: {
     type: string,

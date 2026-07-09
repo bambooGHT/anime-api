@@ -3,9 +3,11 @@ import axios from "axios";
 import type { FastifyRequest } from "fastify";
 import { PassThrough } from "stream";
 import { ImgProxy, SearchValue, type ImgProxyType, type RouteType, type SearchValueType } from "types";
-import { AnimeCrawler } from "crawler";
+import { AnimeCrawler, getAnimeVideoUrl } from "crawler";
 import { proxyAgent } from "proxyAgent";
 import { noodlemagazineCrawler } from "crawler_noodlemagazine";
+import got from "node_modules/got/dist/source";
+import { createWriteStream } from "fs";
 
 type MessageParams = {
   title: string;
@@ -46,34 +48,46 @@ export const routes: RouteType[] = [
             const passthrough = new PassThrough();
             part.file.pipe(passthrough);
             form.append(part.filename, passthrough, part.filename);
-            await part.toBuffer();
           } else {
             Object.assign(info, JSON.parse(part.value as any));
           }
         }
+
         if (!info.media.length) return;
 
         for (const item of info.media) {
           if (!item.media.startsWith("http") || item.type !== "video") continue;
-          const response = await axios.get(item.media, {
-            httpsAgent: proxyAgent,
-            responseType: 'stream',
+
+          if (item.media.includes("vdownload") && !(await checkUrlAlive(item.media))) {
+            item.media = await getAnimeVideoUrl(item.id);
+          }
+
+          const st = got.stream(item.media, {
+            agent: {
+              https: proxyAgent,
+            },
           });
-          form.append(info.title, response.data, info.title);
+          st.on("error", (error) => {
+            console.log(error.message);
+          });
+          form.append(info.title, st, info.title);
           item.media = `attach://${info.title}`;
+
+          // const writer = createWriteStream("video1.mp4");
+          // st.pipe(writer);
+          console.log("上传: " + info.title);
+
+          const media1 = info.media[0];
+          media1.caption = info.caption;
+          media1.parse_mode = info.parse_mode;
+          form.append("chat_id", info.chatId);
+          form.append("media", JSON.stringify(info.media));
+
+          const res1 = await axios.post(`${process.env.API_URL}/bot${info.botToken}/sendMediaGroup`, form);
+          return res1.data;
         }
-
-        const media1 = info.media[0];
-        media1.caption = info.caption;
-        media1.parse_mode = info.parse_mode;
-        form.append("chat_id", info.chatId);
-        form.append("media", JSON.stringify(info.media));
-
-        const res1 = await axios.post(`${process.env.API_URL}/bot${info.botToken}/sendMediaGroup`, form);
-        return res1.data;
-
       } catch (error: any) {
-        console.log("error sendMessage", error);
+        console.log("error sendMessage", error.response?.body);
         res.status(502);
         throw new Error("Message sending failed.");
       }
@@ -122,9 +136,21 @@ export const routes: RouteType[] = [
 
         return response.data;
       } catch (error: any) {
-        console.log("error videoProxy", error.response?.data);
+        // console.log("error videoProxy", error.response?.data);
         throw new Error("load error");
       }
     }
   }
 ];
+
+async function checkUrlAlive(url: string): Promise<boolean> {
+  try {
+    const res = await got.head(url, {
+      agent: { https: proxyAgent },
+      timeout: { request: 3000 }, // 设短一点
+    });
+    return res.statusCode < 400;
+  } catch {
+    return false;
+  }
+}

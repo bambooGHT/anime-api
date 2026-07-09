@@ -8,6 +8,7 @@ let browser: Awaited<ReturnType<VanillaPuppeteer["launch"]>>;
   puppeteer.use(StealthPlugin());
   browser = await puppeteer.launch({
     args: [`--proxy-server=${process.env.GLOBAL_AGENT_HTTP_PROXY}`],
+    // executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe"
   });
 })();
 
